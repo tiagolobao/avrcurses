@@ -198,7 +198,13 @@ mcurses_addch_or_insch (uint_fast8_t ch, uint_fast8_t insert)
     }
 
     mcurses_putc (ch);
-    mcurses_curx++;
+    if( ch == '\r' ){
+        mcurses_cury++;
+        mcurses_curx = 0;
+    }
+    else{
+        mcurses_curx++;
+    }
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -565,13 +571,18 @@ static const char * function_keys[MAX_KEYS] =
 };
 
 uint_fast8_t
+isgetavailable (void)
+{
+    return (uart_drv.getbuffSize() > 0);
+}
+
+uint_fast8_t
 getch (void)
 {
     char    buf[4];
     uint_fast8_t ch;
     uint_fast8_t idx;
 
-    refresh ();
     ch = uart_drv.fgetc();
 
     if (ch == 0x7F)                                                             // BACKSPACE on VT200 sends DEL char

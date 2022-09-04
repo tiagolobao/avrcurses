@@ -20,6 +20,7 @@ struct serialDriver uart_drv = {
     uart_init,       /* serialInit */
     uart_read,       /* getchar */
     uart_send_byte,  /* putchar */
+    uart_read_count, /* getbuffSize */
     uart_flush,      /* flush */
     uart_deinit      /* serialDeinit */
 };

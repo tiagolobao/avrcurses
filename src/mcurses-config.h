@@ -25,8 +25,9 @@
 // Driver structure
 struct serialDriver{
     void (*serialInit)(void);
-    uint_fast8_t (*fgetc)(void);
-    uint8_t (*fputc)(uint_fast8_t ch);
+    uint8_t (*fgetc)(void);
+    uint8_t (*fputc)(uint8_t ch);
+    uint16_t (*getbuffSize)(void);
     void (*flush)(void);
     void (*serialDeinit)(void);
 };

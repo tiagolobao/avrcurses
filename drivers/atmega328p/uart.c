@@ -47,7 +47,6 @@ ISR(USART_RX_vect)
 {
     volatile static uint16_t rx_write_pos = 0;
 
-    vTaskSuspendAll(); /* critical session start */
     if( bufferNotFull(rx_count,RX_BUFFER_SIZE) ){
         rx_buffer[rx_write_pos] = UDR0;
         rx_count++;
@@ -56,7 +55,6 @@ ISR(USART_RX_vect)
     else{
         buffer_full_flag = true;
     }
-    xTaskResumeAll(); /* critical session end */
 }
 
 // ----------------------------------------------------------
@@ -64,7 +62,6 @@ ISR(USART_TX_vect)
 {
     volatile static uint16_t tx_read_pos = 0;
 
-    vTaskSuspendAll(); /* critical session start */
     switch (tx_count){
     case 0:
         break;
@@ -77,7 +74,6 @@ ISR(USART_TX_vect)
         incrementRingBufferIndex(tx_read_pos,TX_BUFFER_SIZE);
     }
 
-    xTaskResumeAll(); /* critical session end */
 }
 
 // ----------------------------------------------------------
@@ -109,7 +105,7 @@ void uart_deinit(void)
 }
 
 // ----------------------------------------------------------
-uint8_t uart_send_byte(uint_fast8_t c)
+uint8_t uart_send_byte(uint8_t c)
 {
     volatile static uint16_t tx_write_pos = 0;
     bool result = true;
@@ -132,28 +128,7 @@ uint8_t uart_send_byte(uint_fast8_t c)
 }
 
 // ----------------------------------------------------------
-void uart_send_array(uint8_t *c,uint16_t len)
-{
-    for(uint16_t i = 0; i < len;i++){
-        uart_send_byte(c[i]);
-    }
-}
-
-// ----------------------------------------------------------
-void uart_send_string(uint8_t *c)
-{
-    uint16_t i = 0;
-
-    do{
-        uart_send_byte(c[i]);
-        i++;
-        
-    }while(c[i] != '\0');
-    uart_send_byte(c[i]);
-}
-
-// ----------------------------------------------------------
-uint_fast16_t uart_read_count(void){
+uint16_t uart_read_count(void){
     return rx_count;
 }
 
@@ -162,6 +137,9 @@ uint8_t uart_read(void){
     static uint16_t rx_read_pos = 0;
     uint8_t data = 0;
     
+    if( rx_count == 0 )
+        return 0xFF; // ERR, compatibility with curses
+
     data = rx_buffer[rx_read_pos];
     rx_count--;
     incrementRingBufferIndex(rx_read_pos,RX_BUFFER_SIZE);

@@ -37,7 +37,7 @@
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-#define RX_BUFFER_SIZE 0x20
+#define RX_BUFFER_SIZE 0x10
 #define TX_BUFFER_SIZE 0x100
 
 #define UART_HIGH_SPEED_UART 1
@@ -78,7 +78,7 @@ void uart_deinit(void);
  * @return bool - if the operation was successful
  *
  *****************************************************/
-uint8_t uart_send_byte(uint_fast8_t c);
+uint8_t uart_send_byte(uint8_t c);
 
 /******************************************************
  * @name uart_send_array
@@ -115,7 +115,7 @@ void uart_send_string(uint8_t *c);
  * @return uint16_t
  *
  *****************************************************/
-uint_fast16_t uart_read_count(void);
+uint16_t uart_read_count(void);
 
 /******************************************************
  * @name uart_read
@@ -127,7 +127,7 @@ uint_fast16_t uart_read_count(void);
  * @return uint8_t
  *
  *****************************************************/
-uint_fast8_t uart_read(void);
+uint8_t uart_read(void);
 
 /******************************************************
  * @name uart_buffer_full_event

@@ -88,8 +88,6 @@ extern uint_fast8_t             mcurses_curx;                                   
  * mcurses functions
  *---------------------------------------------------------------------------------------------------------------------------------------------------
  */
-void                     setFunction_putchar(void (*functionPoitner)(uint8_t ch));
-void                     setFunction_getchar(char (*functionPoitner)(void));
 uint_fast8_t             initscr (void);                                     // initialize mcurses
 void                     move (uint_fast8_t, uint_fast8_t);                  // move cursor to line, column (home = 0, 0)
 void                     attrset (uint_fast16_t);                            // set attribute(s)
@@ -108,6 +106,7 @@ void                     delch (void);                                       // 
 void                     insch (uint_fast8_t);                               // insert character at current position
 void                     nodelay (uint_fast8_t);                             // set/reset nodelay
 void                     halfdelay (uint_fast8_t);                           // set/reset halfdelay
+uint_fast8_t             isgetavailable (void);                              // if there is incomming data to be read
 uint_fast8_t             getch (void);                                       // read key
 void                     curs_set(uint_fast8_t);                             // set cursor to: 0=invisible 1=normal 2=very visible
 void                     refresh (void);                                     // flush output
@@ -128,6 +127,12 @@ void                     endwin (void);                                      // 
 #define mvdelch(y,x)            move((y),(x)), delch()                              // move cursor, then delete character
 #define mvgetnstr(y,x,s,n)      move((y),(x)), getnstr(s,n)                         // move cursor, then get string
 #define getyx(y,x)              y = mcurses_cury, x = mcurses_curx                  // get cursor coordinates
+
+/*---------------------------------------------------------------------------------------------------------------------------------------------------
+ * ASCII codes
+ *---------------------------------------------------------------------------------------------------------------------------------------------------
+ */
+#define ASCII_BEL 0x07
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
  * mcurses keys
