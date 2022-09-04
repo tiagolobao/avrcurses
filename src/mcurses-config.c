@@ -1,12 +1,9 @@
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
- * mcurses-config.h - configuration file for mcurses lib
+ * mcurses-config.c - mcurses lib
  *
  * Copyright (c) 2011-2015 Frank Meyer - frank(at)fli4l.de
  *
- *
  * Revision History:
- * V1.0 2015 xx xx Frank Meyer, original version
- * V1.1 2017 01 13 ChrisMicro , serial interface specific functions removed
  * V1.2 2022 04 09 Tiago Lobao, avr specific, some improvements of cfg
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,19 +13,13 @@
  *---------------------------------------------------------------------------------------------------------------------------------------------------
  */
 
-#define MCURSES_LINES               24              // 24 lines
-#define MCURSES_COLS                80              // 80 columns
-#define USE_AVR_PRGMSPACE           0               // OFF
+#include "mcurses-config.h"
 
-#include "drivers/atmega328p/uart.h"
-
-// Driver structure
-struct serialDriver{
-    void (*serialInit)(void);
-    uint_fast8_t (*fgetc)(void);
-    uint8_t (*fputc)(uint_fast8_t ch);
-    void (*flush)(void);
-    void (*serialDeinit)(void);
+// using atmega328p driver
+struct serialDriver uart_drv = {
+    uart_init,       /* serialInit */
+    uart_read,       /* getchar */
+    uart_send_byte,  /* putchar */
+    uart_flush,      /* flush */
+    uart_deinit      /* serialDeinit */
 };
-
-extern struct serialDriver uart_drv;

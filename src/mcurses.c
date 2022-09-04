@@ -6,6 +6,7 @@
  * Revision History:
  * V1.0 2015 xx xx Frank Meyer, original version
  * V1.1 2017 01 13 ChrisMicro, addepted as Arduino library, MCU specific functions removed
+ * V1.2 2022 04 09 Tiago Lobao, avr specific, some improvements of cfg
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +19,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __AVR__
+#include "mcurses.h"
+
+#if (USE_AVR_PRGMSPACE == 1)
 	#include <avr/pgmspace.h>
 #else
 	#define PROGMEM
 	#define PSTR(x)                                 (x)
 	#define pgm_read_byte(s)                        (*s)
 #endif 
-
-#include "mcurses.h"
 
 #define SEQ_CSI                                 PSTR("\033[")                   // code introducer
 #define SEQ_CLEAR                               PSTR("\033[2J")                 // clear screen
@@ -61,42 +62,20 @@ uint_fast8_t                                    mcurses_curx = 0xff;            
 
 static void                                     mcurses_puts_P (const char *);
 
-char (*FunctionPointer_getchar)(void);
-void  (*FunctionPointer_putchar)(uint_fast8_t ch);
-
-void setFunction_getchar(char (*functionPoitner)(void))
-{
-	FunctionPointer_getchar = functionPoitner;
-}
-
-void setFunction_putchar(void (*functionPoitner)(uint8_t ch))
-{
-	FunctionPointer_putchar = functionPoitner;
-}
-
 static uint_fast8_t mcurses_phyio_init (void)
 {
-  return 0;
-}
-
-/*---------------------------------------------------------------------------------------------------------------------------------------------------
- * PHYIO: done (AVR)
- *---------------------------------------------------------------------------------------------------------------------------------------------------
- */
-static void mcurses_phyio_done (void)
-{
-	
-}
-
-static void mcurses_phyio_putc (uint_fast8_t ch)
-{
-	if(FunctionPointer_putchar!=0)	FunctionPointer_putchar(ch);
-}
-
-static uint_fast8_t mcurses_phyio_getc (void)
-{
-	if(FunctionPointer_getchar!=0)	return FunctionPointer_getchar();
-	else return 0;
+    if(
+      uart_drv.serialInit  != NULL &&
+      uart_drv.fgetc       != NULL &&
+      uart_drv.fputc       != NULL &&
+      uart_drv.flush       != NULL
+    ){
+        uart_drv.serialInit();
+	    return OK;
+    }
+    else{
+        return ERR;
+    }
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -117,22 +96,13 @@ static void mcurses_phyio_halfdelay (uint_fast8_t tenths)
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
- * PHYIO: flush output (AVR)
- *---------------------------------------------------------------------------------------------------------------------------------------------------
- */
-static void mcurses_phyio_flush_output ()
-{
-	
-}
-
-/*---------------------------------------------------------------------------------------------------------------------------------------------------
  * INTERN: put a character (raw)
  *---------------------------------------------------------------------------------------------------------------------------------------------------
  */
-static void
+static uint8_t
 mcurses_putc (uint_fast8_t ch)
 {
-    mcurses_phyio_putc (ch);
+    return uart_drv.fputc(ch);
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -275,7 +245,7 @@ initscr (void)
 {
     uint_fast8_t rtc;
 
-    if (mcurses_phyio_init ())
+    if ( OK == mcurses_phyio_init () )
     {
         mcurses_puts_P (SEQ_LOAD_G1);                                               // load graphic charset into G1
         attrset (A_NORMAL);
@@ -527,7 +497,7 @@ curs_set (uint_fast8_t visibility)
 void
 refresh (void)
 {
-    mcurses_phyio_flush_output ();
+    uart_drv.flush();
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -572,7 +542,7 @@ static const char * function_keys[MAX_KEYS] =
     "5~",                       // KEY_PPAGE                0x88                // Previous-page key
     "4~",                       // KEY_END                  0x89                // End key
     "Z",                        // KEY_BTAB                 0x8A                // Back tab key
-#if 0 // VT400:
+#if (0)  /* VT400: */
     "11~",                      // KEY_F(1)                 0x8B                // Function key F1
     "12~",                      // KEY_F(2)                 0x8C                // Function key F2
     "13~",                      // KEY_F(3)                 0x8D                // Function key F3
@@ -602,7 +572,7 @@ getch (void)
     uint_fast8_t idx;
 
     refresh ();
-    ch = mcurses_phyio_getc ();
+    ch = uart_drv.fgetc();
 
     if (ch == 0x7F)                                                             // BACKSPACE on VT200 sends DEL char
     {
@@ -610,7 +580,7 @@ getch (void)
     }
     else if (ch == '\033')                                                      // ESCAPE
     {
-        while ((ch = mcurses_phyio_getc ()) == ERR)
+        while ( (ch = uart_drv.fgetc()) == ERR )
         {
             ;
         }
@@ -623,7 +593,7 @@ getch (void)
         {
             for (idx = 0; idx < 3; idx++)
             {
-                while ((ch = mcurses_phyio_getc ()) == ERR)
+                while ( (ch = uart_drv.fgetc()) == ERR )
                 {
                     ;
                 }
@@ -761,6 +731,6 @@ endwin (void)
     curs_set (TRUE);                                                            // show cursor
     mcurses_puts_P(SEQ_REPLACE_MODE);                                           // reset insert mode
     refresh ();                                                                 // flush output
-    mcurses_phyio_done ();                                                      // end of physical I/O
+    uart_drv.serialDeinit();                                                    // end of physical I/O
     mcurses_is_up = 0;
 }
