@@ -130,18 +130,16 @@ uint16_t uart_read_count(void);
 uint8_t uart_read(void);
 
 /******************************************************
- * @name uart_buffer_full_event
+ * @name uart_free_spaces
  *
- * @brief check if there was a full buffer event.
- * If at least once during runtime the buffer got full.
- * the flag will clear itself after this check
+ * @brief check how much there is space in the buffer.
  *
- * @arg bool -- true if the event happened
+ * @arg void
  *
- * @return uint8_t
+ * @return uint16_t -- number of free spaces in the buffer
  *
  *****************************************************/
-bool uart_buffer_full_event(void);
+uint16_t uart_free_spaces(void);
 
 /******************************************************
  * @name uart_flush

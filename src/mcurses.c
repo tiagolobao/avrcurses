@@ -102,7 +102,7 @@ static void mcurses_phyio_halfdelay (uint_fast8_t tenths)
 static uint8_t
 mcurses_putc (uint_fast8_t ch)
 {
-    return uart_drv.fputc(ch);
+    return uart_drv.fputc((uint8_t)ch);
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -114,7 +114,7 @@ mcurses_puts_P (const char * str)
 {
     uint_fast8_t ch;
 
-    while ((ch = pgm_read_byte(str)) != '\0')
+    while ((ch = pgm_read_byte(str)) != ASCII_NUL)
     {
         mcurses_putc (ch);
         str++;
@@ -198,13 +198,19 @@ mcurses_addch_or_insch (uint_fast8_t ch, uint_fast8_t insert)
     }
 
     mcurses_putc (ch);
-    if( ch == '\r' ){
-        mcurses_cury++;
+    switch(ch){
+    case KEY_CR:
         mcurses_curx = 0;
-    }
-    else{
-        mcurses_curx++;
-    }
+        break;
+    case ASCII_NEWLINE:
+        mcurses_cury++;
+        break;
+    default:
+        // if it is printable
+        if( 0x20<= ch && ch <= 0x7E )
+            mcurses_curx++;
+        break;
+    }   
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -299,7 +305,7 @@ addstr_P (const char * str)
 {
     uint_fast8_t ch;
 
-    while ((ch = pgm_read_byte(str)) != '\0')
+    while ((ch = pgm_read_byte(str)) != ASCII_NUL)
     {
         mcurses_addch_or_insch (ch, FALSE);
         str++;
@@ -570,11 +576,18 @@ static const char * function_keys[MAX_KEYS] =
     "24~"                       // KEY_F(12)                0x96                // Function key F12
 };
 
-uint_fast8_t
+uint8_t
 isgetavailable (void)
 {
     return (uart_drv.getbuffSize() > 0);
 }
+
+uint8_t
+isaddavailable (void)
+{
+    return (uart_drv.getTxbuffFreeSize() > 0);
+}
+
 
 uint_fast8_t
 getch (void)
@@ -618,7 +631,7 @@ getch (void)
                 }
             }
 
-            buf[idx] = '\0';
+            buf[idx] = ASCII_NUL;
 
             for (idx = 0; idx < MAX_KEYS; idx++)
             {
@@ -693,7 +706,7 @@ getnstr (char * str, uint_fast8_t maxlen)
                     {
                         str[i] = str[i + 1];
                     }
-                    str[i] = '\0';
+                    str[i] = ASCII_NUL;
                     delch();
                 }
                 break;
@@ -706,7 +719,7 @@ getnstr (char * str, uint_fast8_t maxlen)
                     {
                         str[i] = str[i + 1];
                     }
-                    str[i] = '\0';
+                    str[i] = ASCII_NUL;
                     delch();
                 }
                 break;
@@ -726,7 +739,7 @@ getnstr (char * str, uint_fast8_t maxlen)
         }
         move (starty, startx + curpos);
     }
-    str[curlen] = '\0';
+    str[curlen] = ASCII_NUL;
 }
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------

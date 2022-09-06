@@ -106,7 +106,8 @@ void                     delch (void);                                       // 
 void                     insch (uint_fast8_t);                               // insert character at current position
 void                     nodelay (uint_fast8_t);                             // set/reset nodelay
 void                     halfdelay (uint_fast8_t);                           // set/reset halfdelay
-uint_fast8_t             isgetavailable (void);                              // if there is incomming data to be read
+uint8_t                  isaddavailable (void);                              // if there is free space in the uart buffer
+uint8_t                  isgetavailable (void);                              // if there is incomming data to be read
 uint_fast8_t             getch (void);                                       // read key
 void                     curs_set(uint_fast8_t);                             // set cursor to: 0=invisible 1=normal 2=very visible
 void                     refresh (void);                                     // flush output
@@ -133,6 +134,8 @@ void                     endwin (void);                                      // 
  *---------------------------------------------------------------------------------------------------------------------------------------------------
  */
 #define ASCII_BEL 0x07
+#define ASCII_NEWLINE '\n'
+#define ASCII_NUL '\0'
 
 /*---------------------------------------------------------------------------------------------------------------------------------------------------
  * mcurses keys

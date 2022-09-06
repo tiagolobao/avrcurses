@@ -21,6 +21,7 @@ struct serialDriver uart_drv = {
     uart_read,       /* getchar */
     uart_send_byte,  /* putchar */
     uart_read_count, /* getbuffSize */
+    uart_free_spaces, /* getTxbuffFreeSize */
     uart_flush,      /* flush */
     uart_deinit      /* serialDeinit */
 };

@@ -29,7 +29,7 @@
 #include "uart.h"
 
 // Local Macros
-#define incrementRingBufferIndex(i,max) i++; i = ((i < max)? i : 0)
+#define incrementRingBufferIndex(i,max) ++i; if(i>=max) i=0
 #define bufferNotFull(cnt,max) (cnt < max)
 
 // buffers definitions
@@ -38,9 +38,6 @@ volatile static uint16_t rx_count = 0;
 
 volatile static uint8_t tx_buffer[TX_BUFFER_SIZE] = {0};
 volatile static uint16_t tx_count = 0;
-
-// self check flag
-volatile static bool buffer_full_flag = false;
 
 // ----------------------------------------------------------
 ISR(USART_RX_vect)
@@ -52,26 +49,23 @@ ISR(USART_RX_vect)
         rx_count++;
         incrementRingBufferIndex(rx_write_pos,RX_BUFFER_SIZE);
     }
-    else{
-        buffer_full_flag = true;
-    }
 }
 
 // ----------------------------------------------------------
+//volatile static uint8_t busy = 0;
 ISR(USART_TX_vect)
 {
     volatile static uint16_t tx_read_pos = 0;
 
-    switch (tx_count){
-    case 0:
-        break;
-    case 1:
-        tx_count--;
-        break;
-    default: // >1
-        tx_count--;
+    switch(tx_count){
+    default:
         UDR0 = tx_buffer[tx_read_pos];
         incrementRingBufferIndex(tx_read_pos,TX_BUFFER_SIZE);
+    case 1:
+        tx_count--;
+    case 0:
+        break;
+        // do nothing
     }
 
 }
@@ -105,6 +99,12 @@ void uart_deinit(void)
 }
 
 // ----------------------------------------------------------
+uint16_t uart_free_spaces(void)
+{
+    return TX_BUFFER_SIZE - tx_count;
+}
+
+// ----------------------------------------------------------
 uint8_t uart_send_byte(uint8_t c)
 {
     volatile static uint16_t tx_write_pos = 0;
@@ -115,13 +115,14 @@ uint8_t uart_send_byte(uint8_t c)
         tx_count++;
     }
     else if( bufferNotFull(tx_count,TX_BUFFER_SIZE) ){
+        taskENTER_CRITICAL();
         tx_buffer[tx_write_pos] = c;
         tx_count++;
         incrementRingBufferIndex(tx_write_pos,TX_BUFFER_SIZE);
+        taskEXIT_CRITICAL();
     }
     else{
         result = false;
-        buffer_full_flag = true;
     }
     
     return result;
@@ -145,17 +146,6 @@ uint8_t uart_read(void){
     incrementRingBufferIndex(rx_read_pos,RX_BUFFER_SIZE);
 
     return data;
-}
-
-// ----------------------------------------------------------
-bool uart_buffer_full_event(void)
-{
-    bool event_happaned;
-
-    event_happaned = buffer_full_flag;
-    buffer_full_flag = 0;
-
-    return event_happaned;
 }
 
 // ----------------------------------------------------------
