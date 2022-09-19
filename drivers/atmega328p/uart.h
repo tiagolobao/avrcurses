@@ -38,7 +38,7 @@
 #include <avr/interrupt.h>
 
 #define RX_BUFFER_SIZE 0x10
-#define TX_BUFFER_SIZE 0x100
+#define TX_BUFFER_SIZE 0x10
 
 #define UART_HIGH_SPEED_UART 1
 #define UART_BAUD_RATE_UART 115200
